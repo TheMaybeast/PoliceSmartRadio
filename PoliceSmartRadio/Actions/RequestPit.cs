@@ -11,10 +11,8 @@ namespace PoliceSmartRadio.Actions
 {
     internal static class RequestPit
     {
-        public static bool vc_main() { Main(); return true; }
         public static void Main()
         {
-            //if (pitRequestActive) { Game.LogTrivial("PIT request already active"); return; }
             GameFiber.StartNew(delegate
             {
                 
@@ -44,7 +42,13 @@ namespace PoliceSmartRadio.Actions
                     }
                     Game.DisplayNotification("~b~" + PoliceSmartRadio.PlayerName + "~s~: Dispatch, requesting to perform ~r~PIT~s~.");
 
-                    if (NearbyOccupiedCivilianVehsCount > 7)
+                    if (Functions.IsPursuitTrackingModeEnabled(Functions.GetActivePursuit()))
+                    {
+                        GameFiber.Wait(4000);
+                        Game.DisplayNotification("~b~Dispatch ~w~: " + PoliceSmartRadio.PlayerName + ", you are in ~r~tracking mode.~s~ You ~r~aren't clear~s~ to ~r~PIT, ~w~over.");
+                        return;
+                    }
+                    else if (NearbyOccupiedCivilianVehsCount > 7)
                     {
                         GameFiber.Wait(4000);
                         Game.DisplayNotification("~b~Dispatch ~w~: " + PoliceSmartRadio.PlayerName + ", traffic is ~r~too busy.~s~ You ~r~aren't clear~s~ to ~r~PIT, ~w~over.");

@@ -441,7 +441,7 @@ namespace PoliceSmartRadio
         {
             if (PlayAnimations)
             {
-                Game.LocalPlayer.Character.Tasks.PlayAnimation("random@arrests", "generic_radio_chatter", 1.5f, AnimationFlags.UpperBodyOnly | AnimationFlags.SecondaryTask);
+                LSPD_First_Response.Mod.API.Functions.PlayPlayerRadioAction(LSPD_First_Response.Mod.API.Functions.GetPlayerRadioAction(), 2500);
             }
             GameFiber.Wait(750);
             if (PlayRadioButtonSounds)

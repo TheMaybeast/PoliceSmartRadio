@@ -41,11 +41,11 @@ namespace PoliceSmartRadio.Actions
                 if (vehicleToCheck.IsStolen)
                 {
                     Flags += "STOLEN ";
-                    DriverPersona = LSPD_First_Response.Mod.API.Functions.GetPersonaForPed(World.GetAllPeds()[0]);
+                    DriverPersona = Functions.GetPersonaForPed(World.GetAllPeds()[0]);
                     //determine persona to use
                     if (vehicleToCheck.HasDriver && vehicleToCheck.Driver.Exists())
                     {
-                        if (LSPD_First_Response.Mod.API.Functions.GetPersonaForPed(vehicleToCheck.Driver).FullName.ToLower() == Functions.GetVehicleOwnerName(vehicleToCheck).ToLower())
+                        if (Functions.GetPersonaForPed(vehicleToCheck.Driver).FullName.ToLower() == Functions.GetVehicleOwnerName(vehicleToCheck).ToLower())
                         {
                             DriverPersona = Functions.GetPersonaForPed(World.GetAllPeds()[0]);
                         }
@@ -64,9 +64,7 @@ namespace PoliceSmartRadio.Actions
                     }
                     if (DriverPersona == null)
                     {
-                        //create new persona
                         Persona tempPers = Functions.GetPersonaForPed(World.GetAllPeds()[0]);
-                        //DriverPersona = new Persona(World.GetAllPeds()[0], tempPers.Gender, tempPers.BirthDay, tempPers.Citations, tempPers.Forename, tempPers.Surname, tempPers.LicenseState, tempPers.TimesStopped, tempPers.Wanted, tempPers.IsAgent, tempPers.IsCop);
                     }
                     AudioFlags.Add("Stolen");
                 }
@@ -75,9 +73,9 @@ namespace PoliceSmartRadio.Actions
                     //determine persona to use
                     if (vehicleToCheck.HasDriver && vehicleToCheck.Driver.Exists())
                     {
-                        if (LSPD_First_Response.Mod.API.Functions.GetPersonaForPed(vehicleToCheck.Driver).FullName.ToLower() == Functions.GetVehicleOwnerName(vehicleToCheck).ToLower())
+                        if (Functions.GetPersonaForPed(vehicleToCheck.Driver).FullName.ToLower() == Functions.GetVehicleOwnerName(vehicleToCheck).ToLower())
                         {
-                            DriverPersona = LSPD_First_Response.Mod.API.Functions.GetPersonaForPed(vehicleToCheck.Driver);
+                            DriverPersona = Functions.GetPersonaForPed(vehicleToCheck.Driver);
                         }
                         else
                         {
@@ -97,77 +95,74 @@ namespace PoliceSmartRadio.Actions
                     }
                     //DriverPersona = vehicleToCheck.HasDriver && Albo1125.Common.CommonLibrary.CommonVariables.rnd.Next(100) < 80 ? LSPD_First_Response.Mod.API.Functions.GetPersonaForPed(vehicleToCheck.Driver) : LSPD_First_Response.Mod.API.Functions.GetPersonaForPed(World.GetAllPeds()[0]);
                 }
-                LSPD_First_Response.Mod.API.Functions.SetVehicleOwnerName(vehicleToCheck, DriverPersona.FullName);
+                Functions.SetVehicleOwnerName(vehicleToCheck, DriverPersona.FullName);
                 //determine flags on the vehicle
-                if (!PoliceSmartRadio.IsLSPDFRPluginRunning("British Policing Script", new Version("0.9.0.0")))
+                if (Traffic_Policer.API.Functions.GetVehicleRegistrationStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.Expired)
                 {
-                    if (Traffic_Policer.API.Functions.GetVehicleRegistrationStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.Expired)
-                    {
-                        Flags += "EXPIRED REGISTRATION ";
-                        AudioFlags.Add("TrafficViolation");
-                    }
-                    else if (Traffic_Policer.API.Functions.GetVehicleRegistrationStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.None)
-                    {
-                        Flags += "NO REGISTRATION ";
-                        AudioFlags.Add("TrafficViolation");
-                    }
+                    Flags += "EXPIRED REGISTRATION ";
+                    AudioFlags.Add("TrafficViolation");
+                }
+                else if (Traffic_Policer.API.Functions.GetVehicleRegistrationStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.None)
+                {
+                    Flags += "NO REGISTRATION ";
+                    AudioFlags.Add("TrafficViolation");
+                }
 
-                    if (Traffic_Policer.API.Functions.GetVehicleInsuranceStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.Expired)
-                    {
-                        Flags += "EXPIRED INSURANCE ";
-                        AudioFlags.Add("TrafficViolation");
-                    }
-                    else if (Traffic_Policer.API.Functions.GetVehicleInsuranceStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.None)
-                    {
-                        Flags += "NO INSURANCE ";
-                        AudioFlags.Add("TrafficViolation");
-                    }
+                if (Traffic_Policer.API.Functions.GetVehicleInsuranceStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.Expired)
+                {
+                    Flags += "EXPIRED INSURANCE ";
+                    AudioFlags.Add("TrafficViolation");
+                }
+                else if (Traffic_Policer.API.Functions.GetVehicleInsuranceStatus(vehicleToCheck) == Traffic_Policer.EVehicleDetailsStatus.None)
+                {
+                    Flags += "NO INSURANCE ";
+                    AudioFlags.Add("TrafficViolation");
+                }
 
-                    if (DriverPersona.Wanted)
+                if (DriverPersona.Wanted)
+                {
+                    AudioFlags.Add("Warrant");
+                    if (rnd.Next(100) < 75)
                     {
-                        AudioFlags.Add("Warrant");
-                        if (rnd.Next(100) < 75)
-                        {
-                            Flags += "FELONY WARRANT FOR REGISTERED OWNER ";
+                        Flags += "FELONY WARRANT FOR REGISTERED OWNER ";
 
-                        }
-                        else
-                        {
-                            Flags += "BENCH WARRANT FOR REGISTERED OWNER ";
-                        }
-                    }
-
-                    if (DriverPersona.ELicenseState == ELicenseState.Suspended)
-                    {
-                        Flags += "OWNER'S LICENCE SUSPENDED ";
-                        AudioFlags.Add("TrafficFelony");
-                    }
-                    else if (DriverPersona.ELicenseState == ELicenseState.Expired)
-                    {
-                        Flags += "OWNER'S LICENCE EXPIRED ";
-                        AudioFlags.Add("TrafficViolation");
-                    }
-                    else if (DriverPersona.ELicenseState == ELicenseState.None)
-                    {
-                        Flags += "OWNER'S LICENCE INVALID ";
-                        AudioFlags.Add("TrafficViolation");
-                    }
-
-                    if (DriverPersona.Birthday.Date == DateTime.Now.Date)
-                    {
-                        Flags += "~g~OWNER'S BIRTHDAY ";
-                    }
-
-                    if (string.IsNullOrWhiteSpace(Flags))
-                    {
-                        AudioFlags.Add("No1099");
-                        this.Flags += "~g~NONE";
                     }
                     else
                     {
-                        AudioFlags.Add("ProceedCaution");
-                        this.Flags += Flags;
+                        Flags += "BENCH WARRANT FOR REGISTERED OWNER ";
                     }
+                }
+
+                if (DriverPersona.ELicenseState == ELicenseState.Suspended)
+                {
+                    Flags += "OWNER'S LICENCE SUSPENDED ";
+                    AudioFlags.Add("TrafficFelony");
+                }
+                else if (DriverPersona.ELicenseState == ELicenseState.Expired)
+                {
+                    Flags += "OWNER'S LICENCE EXPIRED ";
+                    AudioFlags.Add("TrafficViolation");
+                }
+                else if (DriverPersona.ELicenseState == ELicenseState.None)
+                {
+                    Flags += "OWNER'S LICENCE INVALID ";
+                    AudioFlags.Add("TrafficViolation");
+                }
+
+                if (DriverPersona.Birthday.Date == DateTime.Now.Date)
+                {
+                    Flags += "~g~OWNER'S BIRTHDAY ";
+                }
+
+                if (string.IsNullOrWhiteSpace(Flags))
+                {
+                    AudioFlags.Add("No1099");
+                    this.Flags += "~g~NONE";
+                }
+                else
+                {
+                    AudioFlags.Add("ProceedCaution");
+                    this.Flags += Flags;
                 }
 
                 //read in strings from the vehicle information
@@ -252,21 +247,15 @@ namespace PoliceSmartRadio.Actions
                         GameFiber.Wait(4000);
                         GameFiber.StartNew(checker.PlayAudio);
                         GameFiber.Wait(500);
-                        if (PoliceSmartRadio.IsLSPDFRPluginRunning("British Policing Script", new Version("0.8.0.0")) && vehicleToCheck.Exists())
-                        {
-                            API.BritishPolicingScriptFunctions.RunLicencePlateCheck(vehicleToCheck);
-                        }
-                        else
-                        {
-                            Game.DisplayNotification("~b~Dispatch: ~s~" + PoliceSmartRadio.PlayerName + ", plate check: ~n~~b~Plate: " + checker.LicencePlate + "~n~Model: " + checker.vehModel
+                        Game.DisplayNotification("~b~Dispatch: ~s~" + PoliceSmartRadio.PlayerName + ", plate check: ~n~~b~Plate: " + checker.LicencePlate + "~n~Model: " + checker.vehModel
                                 + "~n~Reg. Year: " + checker.vehicleYear + "~n~Registered Owner: ~y~" + checker.DriverPersona.FullName + "~b~~n~Citations: " + checker.DriverPersona.Citations);
-                            GameFiber.Wait(2000);
-                            Game.DisplayNotification(checker.Flags);
-                        }
+                        GameFiber.Wait(2000);
+                        Game.DisplayNotification(checker.Flags);
                         if (vehCurrentlyBeingChecked == vehicleToCheck)
                         {
                             vehCurrentlyBeingChecked = null;
                         }
+                        Functions.DisplayVehicleRecord(vehicleToCheck, false);
                     }
                 }
                 catch (Exception e)
@@ -296,7 +285,6 @@ namespace PoliceSmartRadio.Actions
         }
         private static Vehicle OnFoot()
         {
-
             Vector3 offSetPos = Game.LocalPlayer.Character.GetOffsetPosition(Vector3.RelativeFront * 4.2f);
             Vehicle[] vehicleList = Game.LocalPlayer.Character.GetNearbyVehicles(10);
             foreach (Vehicle veh in vehicleList)

@@ -21,49 +21,18 @@ namespace PoliceSmartRadio.Actions
             Ped p = GetNearestValidPed();
             if (p.Exists())
             {
-                Persona pers = Functions.GetPersonaForPed(p);
-                Game.DisplayNotification("~b~" + PoliceSmartRadio.PlayerName + "~s~: Dispatch, could you run a person check through for me? It's ~b~" + pers.FullName + "~s~, born on ~b~" + pers.Birthday.ToShortDateString() + "~s~.");
-                if (PoliceSmartRadio.IsLSPDFRPluginRunning("British Policing Script", new Version("0.8.2.0")))
+                if (Functions.HasPedBeenIdentified(p))
                 {
-                    API.BritishPolicingScriptFunctions.RunPedCheck(p, 4000);
+                    Persona pers = Functions.GetPersonaForPed(p);
+                    Game.DisplayNotification("~b~" + PoliceSmartRadio.PlayerName + "~s~: Dispatch, could you run a person check through for me? It's ~b~" + pers.FullName + "~s~, born on ~b~" + pers.Birthday.ToShortDateString() + "~s~.");
+                    GameFiber.Wait(4000);
+                    Functions.DisplayPedId(p, true);
                 }
-                else {
-                    displayRecords(pers);
+                else
+                {
+                    Game.DisplayNotification("~b~You need to identify the person before running a person check!");
                 }
             }
-        }
-
-        private static void displayRecords(Persona pers)
-        {
-            
-            string msg = "Record for: ~b~" + pers.FullName + "~n~~y~" + pers.Gender.ToString() + "~s~, Born: ~y~" + pers.Birthday.ToShortDateString() + "~n~~s~- License is " + licenceStateString(pers.ELicenseState) + ".~n~~s~- " + wantedString(pers.Wanted) + ".";
-            GameFiber.Wait(4000);
-
-            Game.DisplayNotification("3dtextures", "mpgroundlogo_cops", "~b~DISPATCH", pers.FullName, msg);
-        }
-
-        private static string licenceStateString(ELicenseState state)
-        {
-            if (state == ELicenseState.Valid)
-            {
-                return "~s~valid";
-            }
-            else if (state == ELicenseState.Suspended)
-            {
-                return "~r~suspended";
-            }
-            else if (state == ELicenseState.Expired)
-            {
-                return "~o~expired";
-            }
-            else
-            {
-                return "~s~no records";
-            }
-        }
-        private static string wantedString(bool wanted)
-        {
-            return wanted ? "~r~Suspect is wanted" : "~s~No active warrants";
         }
 
         private static Ped GetNearestValidPed(float Radius = 3.5f, bool allowPursuitPeds = false, int subtitleDisplayTime = 3000)

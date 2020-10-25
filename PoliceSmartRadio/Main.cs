@@ -13,8 +13,7 @@ namespace PoliceSmartRadio
     {
         public Main()
         {
-            Albo1125.Common.UpdateChecker.VerifyXmlNodeExists(PluginName, FileID, DownloadURL, Path);
-            Albo1125.Common.DependencyChecker.RegisterPluginForDependencyChecks(PluginName);
+
         }
 
         public override void Finally()
@@ -32,17 +31,16 @@ namespace PoliceSmartRadio
         }
 
         internal static Version Albo1125CommonVer = new Version("6.6.3.0");
-        internal static Version MadeForGTAVersion = new Version("1.0.1604.1");
+        internal static Version MadeForGTAVersion = new Version("1.0.2060.1");
         internal static float MinimumRPHVersion = 0.51f;
         internal static string[] AudioFilesToCheckFor = new string[] { "Plugins/LSPDFR/PoliceSmartRadio/Audio/ButtonScroll.wav", "Plugins/LSPDFR/PoliceSmartRadio/Audio/ButtonSelect.wav",
             "Plugins/LSPDFR/PoliceSmartRadio/Audio/PlateCheck/TargetPlate1.wav", "Plugins/LSPDFR/PoliceSmartRadio/Audio/PanicButton.wav" };
-        internal static Version MadeForLSPDFRVersion = new Version("0.4.39.22580");
+        internal static Version MadeForLSPDFRVersion = new Version("0.4.8");
         internal static string[] OtherFilesToCheckFor = new string[] { "Plugins/LSPDFR/Traffic Policer.dll", "Plugins/LSPDFR/PoliceSmartRadio/Config/GeneralConfig.ini",
             "Plugins/LSPDFR/PoliceSmartRadio/Config/ControllerConfig.ini", "Plugins/LSPDFR/PoliceSmartRadio/Config/KeyboardConfig.ini", "Plugins/LSPDFR/PoliceSmartRadio/Config/DisplayConfig.ini",
             "Plugins/LSPDFR/PoliceSmartRadio/Config/PanicButton.ini"};
 
         internal static Version TrafficPolicerVersion = new Version("6.14.0.0");
-        internal static Version ArrestManagerVersion = new Version("7.9.1.0");
         internal static string[] conflictingFiles = new string[] { "Plugins/LSPDFR/PoliceRadio.dll" };
 
         internal static string FileID = "15354";
@@ -54,40 +52,15 @@ namespace PoliceSmartRadio
         {
             if (onDuty)
             {
-                Albo1125.Common.UpdateChecker.InitialiseUpdateCheckingProcess();
-                if (Albo1125.Common.DependencyChecker.DependencyCheckMain(PluginName, Albo1125CommonVer, MinimumRPHVersion, MadeForGTAVersion, MadeForLSPDFRVersion, AudioFilesToCheckFor : AudioFilesToCheckFor, OtherRequiredFilesToCheckFor : OtherFilesToCheckFor))
+                GameFiber.StartNew(delegate
                 {
-                    if (!Albo1125.Common.DependencyChecker.CheckIfThereAreNoConflictingFiles(PluginName, conflictingFiles))
+                    AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(ResolveAssemblyEventHandler);
+                    while (!IsLSPDFRPluginRunning("Traffic Policer"))
                     {
-                        Game.LogTrivial("Old Police Radio still installed.");
-                        Game.DisplayNotification("~r~~h~Police SmartRadio detected the old PoliceRadio modification. You must delete it before using Police SmartRadio.");
-                        Albo1125.Common.CommonLibrary.ExtensionMethods.DisplayPopupTextBoxWithConfirmation("Police SmartRadio Dependencies", "Police SmartRadio detected the old PoliceRadio modification. You must delete it before using Police SmartRadio. Unloading...", true);
-                        return;
+                        GameFiber.Yield();
                     }
-                    if (!Albo1125.Common.DependencyChecker.CheckIfFileExists("Plugins/LSPDFR/Traffic Policer.dll", TrafficPolicerVersion))
-                    {
-                        Game.LogTrivial("Traffic Policer is out of date for LSPDR+. Aborting. Required version: " + TrafficPolicerVersion.ToString());
-                        Game.DisplayNotification("~r~~h~Police SmartRadio detected Traffic Policer version lower than ~b~" + TrafficPolicerVersion.ToString());
-                        Albo1125.Common.CommonLibrary.ExtensionMethods.DisplayPopupTextBoxWithConfirmation("Police SmartRadio Dependencies", "Police SmartRadio did not detect Traffic Policer or detected Traffic Policer version lower than " + TrafficPolicerVersion.ToString() + ". Please install the appropriate version of Traffic Policer (link under Requirements on the download page). Unloading Police SmartRadio...", true);
-                        return;
-                    }
-                    if (!Albo1125.Common.DependencyChecker.CheckIfFileExists("Plugins/LSPDFR/Arrest Manager.dll", ArrestManagerVersion))
-                    {
-                        //Game.LogTrivial("Arrest Manager is out of date for Police SmartRadio. Aborting. Required version: " + ArrestManagerVersion.ToString());
-                        Game.DisplayNotification("~r~Police SmartRadio is optimized for use with the latest Arrest Manager - you are advised to install it.");
-                        //Albo1125.Common.CommonLibrary.ExtensionMethods.DisplayPopupTextBoxWithConfirmation("Police SmartRadio Dependencies", "Police SmartRadio did not detect Arrest Manager or detected Arrest Manager version lower than " + ArrestManagerVersion.ToString() + ". Please install the appropriate version of Arrest Manager (link under Requirements on the download page). Unloading Police SmartRadio...", true);
-                    }
-                    GameFiber.StartNew(delegate
-                    {
-                        AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(ResolveAssemblyEventHandler);
-                        while (!IsLSPDFRPluginRunning("Traffic Policer"))
-                        {
-                            GameFiber.Yield();
-                        }
-                        PoliceSmartRadio.Initialise();
-
-                    });
-                }
+                    PoliceSmartRadio.Initialise();
+                });
             }
         }
 
